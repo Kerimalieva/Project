@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -16,13 +18,19 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<User> registerUser(@RequestBody User user) {
-        User registeredUser = userService.registerUser(user.getUsername(), user.getEmail(), user.getPassword());
-        return ResponseEntity.ok(registeredUser);  // Возвращаем объект зарегистрированного пользователя
+        // Здесь токен не требуется, просто создаем нового пользователя
+        if (userService.existsByEmail(user.getEmail())) {
+            return ResponseEntity.badRequest().body(null); // Email уже занят
+        }
+
+        User newUser = userService.save(user);  // Сохраняем нового пользователя
+        return ResponseEntity.ok(newUser);  // Возвращаем нового пользователя
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody LoginRequest loginRequest) {
-        String token = userService.loginUser(loginRequest.getEmail(), loginRequest.getPassword());
-        return ResponseEntity.ok(token);  // Отправка токена вместо объекта пользователя
+    public ResponseEntity<Map<String, String>> loginUser(@RequestBody LoginRequest loginRequest) {
+        Map<String, String> tokens = userService.loginUser(loginRequest.getEmail(), loginRequest.getPassword());
+        return ResponseEntity.ok(tokens);  // Возвращаем токены после успешного логина
     }
 }
+
